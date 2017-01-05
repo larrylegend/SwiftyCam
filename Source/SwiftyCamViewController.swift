@@ -549,6 +549,109 @@ extension SwiftyCamViewController : UIGestureRecognizerDelegate {
     }
 }
 
+extension SwiftyCamViewController {
+    public func toggleNightMode() {
+        struct NightModeState {
+            static var counter = 0
+        }
+
+        /*
+         if let device = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) {
+         guard device.isLowLightBoostSupported else {
+         return
+         }
+         
+         if device.automaticallyEnablesLowLightBoostWhenAvailable {
+         device.automaticallyEnablesLowLightBoostWhenAvailable = false
+         }
+         else {
+         device.automaticallyEnablesLowLightBoostWhenAvailable = true
+         }
+         }
+         */
+        
+        if let device = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) {
+            do {
+                try device.lockForConfiguration()
+                
+                if NightModeState.counter % 2 == 0 {
+                    let isoValue: Float = 1000000.0
+                    
+                    // Adjust the iso to clamp between minIso and maxIso based on the active format
+                    let minISO = device.activeFormat.minISO
+                    let maxISO = device.activeFormat.maxISO
+                    print("minISO: \(minISO), maxISO: \(maxISO)")
+                    let clampedISO = max(minISO, min(maxISO, isoValue))
+                    
+                    // Clamp exposure
+                    let minExpValue = device.activeFormat.minExposureDuration.value
+                    let minExpTimescale = device.activeFormat.minExposureDuration.timescale
+                    
+                    let maxExpValue = device.activeFormat.maxExposureDuration.value
+                    let maxExpTimescale = device.activeFormat.maxExposureDuration.timescale
+                    
+                    print("minExposure: \(minExpValue)/\(minExpTimescale), maxExposure: \(maxExpValue)/\(maxExpTimescale)")
+                    
+                    print("activeVideoMinFrameDuration: \(device.activeVideoMinFrameDuration)")
+                    print("activeVideoMaxFrameDuration: \(device.activeVideoMaxFrameDuration)")
+                    
+                    // max is actually a higher value, so this looks backwards
+                    let exposureDuration = CMTime(value: CMTimeValue(1),
+                                                  timescale: CMTimeScale(20),
+                                                  flags: device.activeFormat.maxExposureDuration.flags,
+                                                  epoch: device.activeFormat.maxExposureDuration.epoch)
+                    
+                    device.exposureMode = .custom
+                    device.setExposureModeCustomWithDuration(exposureDuration, iso: clampedISO, completionHandler: { (time) -> Void in
+                        print("night mode ENABLED")
+                    })
+                }
+                else {
+                    device.exposureMode = .continuousAutoExposure
+                    print("night mode DISABLED")
+                }
+                
+                device.unlockForConfiguration()
+                
+                NightModeState.counter = NightModeState.counter + 1
+            }
+            catch {
+                print("unable to lock device for configuration, bailing out...")
+            }
+        }
+        
+        /*
+         if let device = AVCaptureDevice.defaultDevice(withMediaType: AVMediaTypeVideo) {
+         do {
+         try device.lockForConfiguration()
+         
+         let minBias = device.minExposureTargetBias
+         let maxBias = device.maxExposureTargetBias
+         print("minBias: \(minBias), maxBias: \(maxBias)")
+         
+         if exposureSettingsIndex % 2 == 0 {
+         device.setExposureTargetBias(maxBias, completionHandler: { (time) in
+         print("night mode ENABLED")
+         })
+         }
+         else {
+         device.setExposureTargetBias(0.0, completionHandler: { (time) in
+         print("night mode DISABLED")
+         })
+         }
+         
+         exposureSettingsIndex = exposureSettingsIndex + 1
+         
+         device.unlockForConfiguration()
+         }
+         catch {
+         }
+         }
+         
+         */
+    }
+}
+
 
 
 
