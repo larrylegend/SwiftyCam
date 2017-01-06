@@ -223,16 +223,32 @@ open class SwiftyCamViewController: UIViewController {
         if (device?.hasTorch)! {
             do {
                 try device?.lockForConfiguration()
-                if (device?.torchMode == AVCaptureTorchMode.on) {
+                if (device?.torchMode == AVCaptureTorchMode.on || device?.torchMode == AVCaptureTorchMode.auto) {
                     device?.torchMode = AVCaptureTorchMode.off
                     self.isCameraFlashOn = false
                 } else {
-                    do {
-                        try device?.setTorchModeOnWithLevel(1.0)
-                        self.isCameraFlashOn = true
-                    } catch {
-                        print("[SwiftyCam]: \(error)")
-                    }
+                    device?.torchMode = .auto
+                    self.isCameraFlashOn = true
+                }
+                device?.unlockForConfiguration()
+            } catch {
+                print("[SwiftyCam]: \(error)")
+            }
+        }
+        
+        if (device?.hasFlash)! {
+            do {
+                try device?.lockForConfiguration()
+                if (device?.flashMode == AVCaptureFlashMode.on || device?.flashMode == AVCaptureFlashMode.auto) {
+                    device?.flashMode = AVCaptureFlashMode.off
+                    self.isCameraFlashOn = false
+                    
+                    print("flash is OFF")
+                } else {
+                    device?.flashMode = .auto
+                    self.isCameraFlashOn = true
+
+                    print("flash is ON")
                 }
                 device?.unlockForConfiguration()
             } catch {
